@@ -18,11 +18,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	agents := filepath.Join(doc, "agents")
+	data := filepath.Join(doc, "data")
+	http := filepath.Join(doc, "http")
+	server := filepath.Join(doc, "server")
+
 	r := httprouter.New()
 
 	r.POST("/push", GithubPush)
 
-	h := hyde.NewHullWithRouter(":3000", r, doc)
+	h := hyde.NewHullWithRouter(":3000", r, agents, data, http, server)
 	h.Start()
 }
 
