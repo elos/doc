@@ -2,12 +2,12 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os/exec"
 	"path/filepath"
 
+	"github.com/elos/ehttp/builtin"
+	"github.com/elos/ehttp/serve"
 	"github.com/elos/hyde"
-	"github.com/julienschmidt/httprouter"
 )
 
 var secret = "githubsecret"
@@ -23,15 +23,20 @@ func main() {
 	http := filepath.Join(doc, "http")
 	server := filepath.Join(doc, "server")
 
-	r := httprouter.New()
-
+	r := builtin.NewRouter()
 	r.POST("/push", GithubPush)
+	hull := hyde.NewHullWithRouter(r, agents, data, http, server)
 
-	h := hyde.NewHullWithRouter(":3000", r, agents, data, http, server)
-	h.Start()
+	s := serve.New(&serve.Opts{
+		Port:    3000,
+		Handler: hull,
+	})
+
+	go s.Start()
+	s.WaitStop()
 }
 
-func GithubPush(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func GithubPush(c *serve.Conn) {
 	log.Print("Heard from github")
 	err := exec.Command("rm", "-rf", "documentation").Run()
 	if err != nil {
